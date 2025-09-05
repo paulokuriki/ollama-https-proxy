@@ -13,6 +13,7 @@ app = FastAPI()
 
 OLLAMA_URL = "http://localhost"
 OLLAMA_PORT = 11123
+PROXY_PORT = 11434
 
 # Configure logging
 logging.basicConfig(
@@ -73,9 +74,9 @@ async def startup_event():
     print("|   OLLAMA PROXY IS RUNNING                 |")
     print("|                                           |")
     print(f"|   Local:  http://127.0.0.1:{OLLAMA_PORT}          |")
-    print(f"|   LAN:    http://{ip}:{OLLAMA_PORT}          |")
+    print(f"|   LAN:    https://{ip}:{PROXY_PORT}         |")
     print("|                                           |")
     print("|   Example:                                |")
-    print(f"|   curl http://127.0.0.1:{OLLAMA_PORT}/api/tags |")
+    print(f"|   curl https://127.0.0.1:{PROXY_PORT}/api/tags   |")
     print("+-------------------------------------------+")
     print("")
