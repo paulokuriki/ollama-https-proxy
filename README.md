@@ -4,33 +4,44 @@ A simple HTTPS proxy for Ollama that provides secure access to your local Ollama
 
 ## What it does
 
-- Provides HTTPS access to Ollama (which only runs on HTTP)
-- Logs all requests to `api_usage.log`
-- Zero authentication - just a secure tunnel
-- Self-signed SSL certificates for development
+* Provides HTTPS access to Ollama (which only runs on HTTP by default)
+* Logs all requests to `api_usage.log`
+* No authentication — just a secure tunnel for development
+* Uses self-signed SSL certificates for testing
+
+⚠️ **Warning**: This proxy is for **local testing and development only**.
+For production, you must add authentication and replace the self-signed certs with real ones (e.g. Let’s Encrypt).
+
+---
 
 ## Quick Start
 
 1. **Clone and run:**
+
    ```bash
    git clone https://github.com/paulokuriki/ollama-https-proxy.git
    cd ollama-https-proxy
-   chmod +x run.sh
-   ./run.sh
+   chmod +x start_proxy.sh run_ollama.sh
+   ./start_proxy.sh
    ```
 
-2. **Make sure Ollama is running:**
+2. **Start Ollama (if not already running):**
+
    ```bash
-   ollama serve
+   ./run_ollama.sh
    ```
 
 3. **Access Ollama securely:**
-   - Instead of: `http://localhost:11434`
-   - Use: `https://localhost:11443`
+
+   * Instead of: `http://localhost:11434`
+   * Use: `https://localhost:11443`
+
+---
 
 ## Usage Examples
 
 **Chat with a model:**
+
 ```bash
 curl -k -X POST https://localhost:11443/api/chat \
   -H "Content-Type: application/json" \
@@ -41,50 +52,62 @@ curl -k -X POST https://localhost:11443/api/chat \
 ```
 
 **List models:**
+
 ```bash
 curl -k https://localhost:11443/api/tags
 ```
 
 **Pull a model:**
+
 ```bash
 curl -k -X POST https://localhost:11443/api/pull \
   -H "Content-Type: application/json" \
   -d '{"name": "llama2"}'
 ```
 
+---
+
 ## What gets created
 
-- `venv/` - Python virtual environment
-- `certificates/` - Self-signed SSL certificates
-- `api_usage.log` - Request logs
+* `venv/` — Python virtual environment
+* `certificates/` — Self-signed SSL certificates (auto-generated)
+* `api_usage.log` — Request logs
+
+---
 
 ## Configuration
 
-The proxy forwards requests from `https://localhost:11443` to `http://localhost:11434` (Ollama default).
+The proxy forwards requests from `https://localhost:11443` → `http://localhost:11434` (Ollama default).
+To change ports or host, edit **`proxy.py`**.
 
-To change the Ollama port, edit `proxy.py` and update the target URL.
+---
 
 ## Requirements
 
-- Python 3.7+
-- OpenSSL (for certificate generation)
-- Ollama running locally
+* Python 3.7+
+* OpenSSL (for certificate generation)
+* Ollama running locally
+
+---
 
 ## Notes
 
-- Uses self-signed certificates (browser will show security warning)
-- For production, replace with proper SSL certificates
-- No rate limiting or authentication
-- Logs include timestamps, methods, paths, and response times
+* Self-signed certs will trigger browser warnings (`-k` needed for curl).
+* No authentication, rate limiting, or access controls included.
+* Logs include timestamps, methods, paths, status codes, and response times.
+
+---
 
 ## Troubleshooting
 
-**"Connection refused":**
-- Make sure Ollama is running: `ollama serve`
+**"Connection refused"**
 
-**"SSL certificate error":**
-- Use `-k` flag with curl, or accept browser security warning
+* Make sure Ollama is running: `./run_ollama.sh`
 
-**"Module not found":**
-- The script will try to load Python modules automatically
-- If it fails, ensure Python 3.7+ is available
+**"SSL certificate error"**
+
+* Use `-k` flag with curl, or accept browser warning.
+
+**"Module not found"**
+
+* The script tries to load Python automatically. Ensure Python 3.7+ is available.
