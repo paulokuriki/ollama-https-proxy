@@ -42,6 +42,6 @@ fi
 source venv/bin/activate
 
 # Start proxy
-uvicorn proxy:app --host 0.0.0.0 --port 11443 \
+uvicorn proxy:app --host 0.0.0.0 --port 11434 \
     --ssl-keyfile certificates/key.pem \
     --ssl-certfile certificates/cert.pem

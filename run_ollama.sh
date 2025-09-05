@@ -18,6 +18,7 @@ systemctl disable --now ollama.service 2>/dev/null
 # export OLLAMA_HOST=0.0.0.0
 # export OLLAMA_ORIGINS="*"
 export OLLAMA_PORT=11123
+export OLLAMA_HOST=127.0.0.1:$OLLAMA_PORT
 
 # Start Ollama
 ollama serve

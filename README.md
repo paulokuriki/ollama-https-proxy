@@ -34,7 +34,7 @@ For production, you must add authentication and replace the self-signed certs wi
 3. **Access Ollama securely:**
 
    * Instead of: `http://localhost:11434`
-   * Use: `https://localhost:11443`
+   * Use: `https://localhost:11434`
 
 ---
 
@@ -43,7 +43,7 @@ For production, you must add authentication and replace the self-signed certs wi
 **Chat with a model:**
 
 ```bash
-curl -k -X POST https://localhost:11443/api/chat \
+curl -k -X POST https://localhost:11434/api/chat \
   -H "Content-Type: application/json" \
   -d '{
     "model": "llama2",
@@ -54,13 +54,13 @@ curl -k -X POST https://localhost:11443/api/chat \
 **List models:**
 
 ```bash
-curl -k https://localhost:11443/api/tags
+curl -k https://localhost:11434/api/tags
 ```
 
 **Pull a model:**
 
 ```bash
-curl -k -X POST https://localhost:11443/api/pull \
+curl -k -X POST https://localhost:11434/api/pull \
   -H "Content-Type: application/json" \
   -d '{"name": "llama2"}'
 ```
@@ -77,7 +77,7 @@ curl -k -X POST https://localhost:11443/api/pull \
 
 ## Configuration
 
-The proxy forwards requests from `https://localhost:11443` → `http://localhost:11434` (Ollama default).
+The proxy forwards requests from `https://localhost:11434` → `http://localhost:11434` (Ollama default).
 To change ports or host, edit **`proxy.py`**.
 
 ---
