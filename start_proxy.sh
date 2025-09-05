@@ -18,7 +18,7 @@ fi
 if [ ! -d "venv" ] || [ ! -f "certificates/cert.pem" ]; then
     echo "Setting up HTTPS proxy..."
 
-    mkdir -p certificates src
+    mkdir -p certificates
 
     # Generate SSL cert
     if [ ! -f "certificates/cert.pem" ]; then
