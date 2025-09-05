@@ -1,13 +1,18 @@
+import os
 import logging
 import time
 from fastapi import FastAPI, Request
 from fastapi.responses import Response
 import httpx
 
+# Clear proxy settings if needed
+os.environ["http_proxy"] = ""
+os.environ["https_proxy"] = ""
+
 app = FastAPI()
 
 OLLAMA_URL = "http://localhost"
-OLLAMA_PORT = 11434
+OLLAMA_PORT = 11123
 
 # Configure logging
 logging.basicConfig(
