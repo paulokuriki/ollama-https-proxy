@@ -58,25 +58,27 @@ async def proxy(path: str, request: Request):
         headers=dict(response.headers)
     )
 
-
-# --------- SHOW STARTUP INFO ---------
 @app.on_event("startup")
 async def startup_event():
-    # Try to guess the machine's IP (for LAN use)
     import socket
     try:
         ip = socket.gethostbyname(socket.gethostname())
     except Exception:
         ip = "127.0.0.1"
 
+    BOX_WIDTH = 50  # total width inside +---...---+
+
+    def box_line(text=""):
+        return "| " + text.ljust(BOX_WIDTH - 3) + "|"
+
     print("")
-    print("+-------------------------------------------+")
-    print("|   OLLAMA PROXY IS RUNNING                 |")
-    print("|                                           |")
-    print(f"|   Local:  http://127.0.0.1:{OLLAMA_PORT}          |")
-    print(f"|   LAN:    https://{ip}:{PROXY_PORT}         |")
-    print("|                                           |")
-    print("|   Example:                                |")
-    print(f"|   curl https://127.0.0.1:{PROXY_PORT}/api/tags   |")
-    print("+-------------------------------------------+")
+    print("+" + "-" * (BOX_WIDTH - 2) + "+")
+    print(box_line("OLLAMA PROXY IS RUNNING"))
+    print(box_line())
+    print(box_line(f"Local:  http://127.0.0.1:{OLLAMA_PORT}"))
+    print(box_line(f"LAN:    https://{ip}:{PROXY_PORT}"))
+    print(box_line())
+    print(box_line("Example:"))
+    print(box_line(f"curl -k https://{ip}:{PROXY_PORT}/api/tags"))
+    print("+" + "-" * (BOX_WIDTH - 2) + "+")
     print("")
