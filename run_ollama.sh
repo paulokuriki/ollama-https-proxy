@@ -1,31 +1,26 @@
 #!/bin/bash
 # ======================================
-# Ollama Startup Script
+# Final Ollama Startup Script for Radiology RAG System
 # ======================================
 
 # --------- CONSTANTS / CONFIG ---------
 CONST_GPU_ID=${CONST_GPU_ID:-0}                 # GPU ID (default: 0)
-OLLAMA_PORT=${OLLAMA_PORT:-11123}               # Port (default: 11123)
-OLLAMA_REQUIRES_SUDO=0                          # 1 or 0 
+OLLAMA_PORT=${OLLAMA_PORT:-11434}               # Default Ollama port (can override if supported)
+OLLAMA_REQUIRES_SUDO=0                          # 1 = force sudo, 0 = no check
 
 # Optional: Set OLLAMA_MODELS_DIR manually if needed
 OLLAMA_MODELS_DIR="/project/radiology/Kuriki_lab/shared/ollama_models"
 
 # --------- PRECHECKS ---------
-# Sudo enforcement (only if required)
-if [ "$OLLAMA_REQUIRES_SUDO" -eq 1 ]; then
-  if [ "$EUID" -ne 0 ]; then
-    echo ">>> ERROR: Please run with sudo (set OLLAMA_REQUIRES_SUDO=0 to skip this check)."
-    exit 1
-  fi
+if [ "$OLLAMA_REQUIRES_SUDO" -eq 1 ] && [ "$EUID" -ne 0 ]; then
+  echo ">>> ERROR: Please run with sudo (or set OLLAMA_REQUIRES_SUDO=0)."
+  exit 1
 fi
 
 # Kill any running Ollama processes
 echo ">>> Stopping any existing Ollama processes..."
 pkill -f "ollama serve" 2>/dev/null
 pkill -x ollama 2>/dev/null
-
-# Disable autostart if using systemd
 systemctl disable --now ollama.service 2>/dev/null
 
 # GPU setup
@@ -44,9 +39,7 @@ fi
 
 # Set host dynamically (prefer cluster IP, fallback to localhost)
 OLLAMA_IP=$(ip a | grep 'inet ' | grep -oP '172\.18\.\d+\.\d+' | head -n 1)
-if [ -z "$OLLAMA_IP" ]; then
-  OLLAMA_IP="127.0.0.1"
-fi
+[ -z "$OLLAMA_IP" ] && OLLAMA_IP="127.0.0.1"
 export OLLAMA_HOST=$OLLAMA_IP:$OLLAMA_PORT
 
 # Verify models directory only if provided
@@ -55,7 +48,7 @@ if [ -n "$OLLAMA_MODELS_DIR" ]; then
     echo ">>> Verified: directory exists at $OLLAMA_MODELS_DIR."
   else
     echo ">>> ERROR: OLLAMA_MODELS directory $OLLAMA_MODELS_DIR does not exist."
-    echo ">>> Please create the directory or unset OLLAMA_MODELS_DIR to use defaults."
+    echo ">>> Please create the directory or unset OLLAMA_MODELS_DIR."
     exit 1
   fi
 fi
@@ -79,7 +72,7 @@ echo "|  Example Pull Model:                      |"
 echo "|  curl --noproxy '*' http://$OLLAMA_IP:$OLLAMA_PORT/api/pull -d '{\"name\": \"phi4:14b\"}'"
 echo "|                                           |"
 echo "|  Example Test Model:                      |"
-echo "|  curl --noproxy '*' http://$OLLAMA_IP:$OLLAMA_PORT/api/generate -d '{\"model\": \"phi4:14b\", \"prompt\": \"how are you\", \"stream\": false}'"
+echo "|  curl --noproxy '*' http://$OLLAMA_IP:$OLLAMA_PORT/api/generate -d '{\"model\": \"phi4:14b\", \"prompt\": \"hi\", \"stream\": false}'"
 echo "|                                           |"
 echo "+-------------------------------------------+"
 echo ""
@@ -99,12 +92,11 @@ fi
 
 disown
 
-echo ">>> Ollama API server started successfully."
+echo ">>> Ollama API server started successfully (port $OLLAMA_PORT)."
 echo ">>> Server log available at: $(pwd)/ollama.log"
 echo ">>> To stop Ollama, run: kill -9 \$(lsof -t -i :$OLLAMA_PORT)"
 echo ""
 echo "*****  SECURITY NOTICE  *****"
 echo ">>> This Ollama instance is only accessible locally ($OLLAMA_HOST)."
-echo ">>> If you need to access it from other machines, use a reverse proxy"
-echo ">>> with HTTPS (e.g., Nginx, Caddy, or Traefik) to securely expose it."
+echo ">>> To expose it externally, use a reverse proxy with HTTPS."
 echo ""
