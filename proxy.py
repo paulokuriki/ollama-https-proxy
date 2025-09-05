@@ -12,8 +12,8 @@ os.environ["https_proxy"] = ""
 app = FastAPI()
 
 OLLAMA_URL = "http://localhost"
-OLLAMA_PORT = 11123
-PROXY_PORT = 11434
+OLLAMA_PORT = 11434
+PROXY_PORT = 11443
 
 # Configure logging
 logging.basicConfig(
@@ -32,7 +32,7 @@ async def log_requests(request: Request, call_next):
     duration = time.time() - start
     logging.info(
         f"{request.client.host} {request.method} {request.url.path} "
-        f"→ {response.status_code} ({duration:.2f}s)"
+        f"? {response.status_code} ({duration:.2f}s)"
     )
     return response
 
@@ -66,7 +66,7 @@ async def startup_event():
     except Exception:
         ip = "127.0.0.1"
 
-    BOX_WIDTH = 50  # total width inside +---...---+
+    BOX_WIDTH = 70  # total width inside +---...---+
 
     def box_line(text=""):
         return "| " + text.ljust(BOX_WIDTH - 3) + "|"
@@ -79,6 +79,6 @@ async def startup_event():
     print(box_line(f"LAN:    https://{ip}:{PROXY_PORT}"))
     print(box_line())
     print(box_line("Example:"))
-    print(box_line(f"curl -k https://{ip}:{PROXY_PORT}/api/tags"))
+    print(box_line(f"curl -k --noproxy '*'  https://{ip}:{PROXY_PORT}/api/tags"))
     print("+" + "-" * (BOX_WIDTH - 2) + "+")
     print("")
