@@ -16,13 +16,12 @@ For production, you must add authentication and replace the self-signed certs wi
 
 ## Quick Start
 
-1. **Clone and run:**
+1. **Clone:**
 
    ```bash
    git clone https://github.com/paulokuriki/ollama-https-proxy.git
    cd ollama-https-proxy
    chmod +x start_proxy.sh run_ollama.sh
-   ./start_proxy.sh
    ```
 
 2. **Start Ollama (if not already running):**
@@ -31,7 +30,14 @@ For production, you must add authentication and replace the self-signed certs wi
    ./run_ollama.sh
    ```
 
-3. **Access Ollama securely:**
+3. **Start Proxy:**
+
+   ```bash
+   ./start_proxy.sh
+   ```
+
+
+5. **Access Ollama securely:**
 
    * Instead of: `http://localhost:11434`
    * Use: `https://localhost:11434`
