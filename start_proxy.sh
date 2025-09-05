@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# --------- CONSTANTS / CONFIG ---------
+PROXY_PORT=${PROXY_PORT:-11443}   # Proxy HTTPS port (default: 11443)
+
 # Load Python module if available (for HPC clusters)
 module load python 2>/dev/null || true
 
@@ -14,13 +17,13 @@ else
     exit 1
 fi
 
-# Setup check
+# --------- SETUP CHECK ---------
 if [ ! -d "venv" ] || [ ! -f "certificates/cert.pem" ]; then
     echo "Setting up HTTPS proxy..."
 
     mkdir -p certificates
 
-    # Generate SSL cert
+    # Generate SSL cert if missing
     if [ ! -f "certificates/cert.pem" ]; then
         openssl req -x509 -newkey rsa:2048 -nodes \
             -out certificates/cert.pem \
@@ -38,10 +41,11 @@ if [ ! -d "venv" ] || [ ! -f "certificates/cert.pem" ]; then
     echo "Setup complete."
 fi
 
-# Activate venv
+# --------- ACTIVATE VENV ---------
 source venv/bin/activate
 
-# Start proxy
-uvicorn proxy:app --host 0.0.0.0 --port 11434 \
+# --------- START PROXY ---------
+echo ">>> Starting HTTPS proxy on port $PROXY_PORT..."
+uvicorn proxy:app --host 0.0.0.0 --port $PROXY_PORT \
     --ssl-keyfile certificates/key.pem \
     --ssl-certfile certificates/cert.pem
