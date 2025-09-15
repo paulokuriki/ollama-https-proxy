@@ -1,6 +1,7 @@
 import os
 import logging
 import time
+import json
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse, Response
 import httpx
@@ -62,8 +63,12 @@ async def log_requests(request: Request, call_next):
 async def stream_response(response):
     """Stream the response content chunk by chunk"""
     try:
-        async for chunk in response.aiter_bytes(chunk_size=8192):
-            yield chunk
+        async for chunk in response.aiter_bytes(chunk_size=1024):
+            if chunk:  # Only yield non-empty chunks
+                yield chunk
+    except httpx.StreamClosed:
+        # Stream naturally closed - this is normal
+        logging.debug("Stream closed normally")
     except Exception as e:
         logging.error(f"Streaming error: {e}")
         raise
@@ -85,28 +90,57 @@ async def proxy(path: str, request: Request):
         pool=None
     )
 
-    # Check if this is a streaming endpoint
-    is_streaming = path == "api/chat" and request.method == "POST"
+    # Check if this is a streaming request by examining the JSON payload
+    is_streaming = False
+    if request.method == "POST" and body:
+        try:
+            import json
+            json_body = json.loads(body)
+            # Check if stream is explicitly set to true in the request
+            is_streaming = json_body.get("stream", False) is True
+
+            # Log the streaming decision
+            if is_streaming:
+                logging.info(f"Streaming request detected for {path} (model: {json_body.get('model', 'unknown')})")
+        except (json.JSONDecodeError, Exception):
+            # If we can't parse the JSON, assume non-streaming
+            pass
 
     try:
         if is_streaming:
-            # For streaming responses, use a streaming approach
-            async with httpx.AsyncClient(timeout=timeout) as client:
-                # Make the request with stream=True
-                async with client.stream(
-                        request.method,
-                        f"{OLLAMA_URL}:{OLLAMA_PORT}/{path}",
-                        headers=headers,
-                        content=body,
-                        params=request.query_params
-                ) as response:
-                    # Return a streaming response
-                    return StreamingResponse(
-                        stream_response(response),
-                        status_code=response.status_code,
-                        headers=dict(response.headers),
-                        media_type=response.headers.get("content-type", "application/json")
-                    )
+            # For streaming responses, keep the client alive during streaming
+            client = httpx.AsyncClient(timeout=timeout)
+            try:
+                # Start the streaming request
+                request = client.build_request(
+                    request.method,
+                    f"{OLLAMA_URL}:{OLLAMA_PORT}/{path}",
+                    headers=headers,
+                    content=body,
+                    params=request.query_params
+                )
+                response = await client.send(request, stream=True)
+
+                # Create a generator that properly handles the stream
+                async def generate():
+                    try:
+                        async for chunk in response.aiter_bytes(1024):
+                            if chunk:
+                                yield chunk
+                    finally:
+                        await response.aclose()
+                        await client.aclose()
+
+                # Return streaming response
+                return StreamingResponse(
+                    generate(),
+                    status_code=response.status_code,
+                    headers=dict(response.headers),
+                    media_type=response.headers.get("content-type", "text/event-stream")
+                )
+            except Exception as e:
+                await client.aclose()
+                raise
         else:
             # For non-streaming endpoints, use regular request
             async with httpx.AsyncClient(timeout=timeout) as client:
